@@ -1,7 +1,20 @@
+import {library} from './library.js';
+import {muscleGroups,recordStart} from './analysis.js';
 export const uid=()=>globalThis.crypto.randomUUID();
 export const dateOnly=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 export const starterNames=['Barbell bench press','Incline dumbbell press','Dumbbell shoulder press','Lateral raise','Cable fly','Triceps pushdown','Lat pulldown','Seated cable row','Barbell row','Dumbbell curl','Hammer curl','Back squat','Leg press','Romanian deadlift','Leg extension','Seated leg curl','Standing calf raise','Hip thrust','Pull-up','Push-up'];
-export const fresh=()=>({schemaVersion:1,exercises:starterNames.map(name=>({id:uid(),name,isCustom:false})),programs:[],workoutLogs:[],draft:null});
+export const fresh=()=>migrate({schemaVersion:1,exercises:starterNames.map(name=>({id:uid(),name,isCustom:false})),programs:[],workoutLogs:[],draft:null});
+export const normalName=n=>n.trim().toLowerCase().replace(/\bdb\b/g,'dumbbell').replace(/\s+/g,' ');
+const initialGroups=['Chest','Chest','Shoulders','Shoulders','Chest','Triceps','Back','Back','Back','Biceps','Biceps','Quads','Quads','Hamstrings','Quads','Hamstrings','Calves','Glutes','Back','Chest'];
+export function migrate(input){
+ const d=structuredClone(input);
+ if(d.schemaVersion===2)return d;
+ d.exercises.forEach(e=>{const seed=library.find(s=>[s.name,...s.aliases].some(n=>normalName(n)===normalName(e.name)));const i=starterNames.findIndex(n=>normalName(n)===normalName(e.name));e.muscleGroup=seed?.muscleGroup??(!e.isCustom&&i>=0?initialGroups[i]:'Uncategorised');e.favourite=seed?.favourite??false;e.aliases=seed?.aliases??[];});
+ for(const seed of library){if(!d.exercises.some(e=>[seed.name,...seed.aliases].some(n=>normalName(n)===normalName(e.name))))d.exercises.push({...seed,id:uid(),isCustom:false});}
+ d.schemaVersion=2;d.sessionStarts=[];
+ for(const l of [...d.workoutLogs,...(d.draft?[d.draft]:[])])recordStart(d,l);
+ return d;
+}
 export const active=d=>d.programs.find(p=>p.status==='active');
 export function week(d,p){for(let w=1;w<=p.weeks;w++){if(!p.sessionTemplates.every(s=>d.workoutLogs.some(l=>l.programId===p.id&&l.sessionTemplateId===s.id&&l.weekNumber===w)))return w;}return p.weeks+1;}
 export function previous(d,pid,sid,eid){return [...d.workoutLogs].reverse().find(l=>l.programId===pid&&l.sessionTemplateId===sid&&l.exercises.some(e=>e.exerciseId===eid&&e.sets.length));}
@@ -10,11 +23,12 @@ export function finish(d){if(!d.draft)return false;const log=structuredClone(d.d
 export function validate(d){
  const fail=()=>{throw new Error('This is not a valid Setbook backup. Your current data has not changed.')};
  const str=x=>typeof x==='string'&&x.length<=20000;const num=(x,min=0,max=100000)=>typeof x==='number'&&Number.isFinite(x)&&x>=min&&x<=max;const integer=(x,min,max)=>num(x,min,max)&&Number.isInteger(x);
- if(!d||d.schemaVersion!==1||!Array.isArray(d.exercises)||!Array.isArray(d.programs)||!Array.isArray(d.workoutLogs))fail();
+ if(!d||![1,2].includes(d.schemaVersion)||!Array.isArray(d.exercises)||!Array.isArray(d.programs)||!Array.isArray(d.workoutLogs))fail();
  const ids=new Set();const id=x=>{if(!str(x)||!x||ids.has(x))fail();ids.add(x)};
- d.exercises.forEach(e=>{id(e.id);if(!str(e.name)||typeof e.isCustom!=='boolean')fail()});const eids=new Set(d.exercises.map(e=>e.id));
+ d.exercises.forEach(e=>{id(e.id);if(!str(e.name)||typeof e.isCustom!=='boolean')fail();if(d.schemaVersion===2&&(!muscleGroups.includes(e.muscleGroup)||typeof e.favourite!=='boolean'||!Array.isArray(e.aliases)||e.aliases.some(a=>!str(a))))fail()});const eids=new Set(d.exercises.map(e=>e.id));
  d.programs.forEach(p=>{id(p.id);if(!str(p.name)||!['active','completed'].includes(p.status)||!integer(p.weeks,1,52)||!integer(p.sessionsPerWeek,1,7)||!Array.isArray(p.sessionTemplates)||p.sessionTemplates.length!==p.sessionsPerWeek)fail();p.sessionTemplates.forEach(s=>{id(s.id);if(!str(s.name)||!Array.isArray(s.exercises)||!s.exercises.length)fail();s.exercises.forEach(e=>{if(!eids.has(e.exerciseId)||!integer(e.repRangeMin,1,100)||!integer(e.repRangeMax,e.repRangeMin,100)||!num(e.startingWeight,0,2000)||!integer(e.defaultSets,1,20)||!str(e.notes))fail()});if(new Set(s.exercises.map(e=>e.exerciseId)).size!==s.exercises.length)fail()})});
  if(d.programs.filter(p=>p.status==='active').length>1)fail();
+ if(d.schemaVersion===2){if(!Array.isArray(d.sessionStarts))fail();const seen=new Set();for(const s of d.sessionStarts){const p=d.programs.find(p=>p.id===s.programId);if(!str(s.id)||seen.has(s.id)||!p?.sessionTemplates.some(t=>t.id===s.sessionTemplateId)||!str(s.date)||!/^\d{4}-\d{2}-\d{2}$/.test(s.date))fail();seen.add(s.id);}}
  const checkLog=(l,draft=false)=>{id(l.id);const p=d.programs.find(p=>p.id===l.programId),s=p?.sessionTemplates.find(s=>s.id===l.sessionTemplateId);if(!s||!integer(l.weekNumber,1,p.weeks)||!str(l.date)||!/^\d{4}-\d{2}-\d{2}$/.test(l.date)||!Array.isArray(l.exercises)||l.exercises.length!==s.exercises.length)fail();l.exercises.forEach((e,i)=>{if(e.exerciseId!==s.exercises[i].exerciseId||!str(e.notes)||!Array.isArray(e.sets)||e.sets.length>50)fail();e.sets.forEach(t=>{if(!integer(t.setNumber,1,50)||!(num(t.weight,0,2000)||(draft&&t.weight===''))||!(integer(t.reps,0,1000)||(draft&&t.reps===''))||(draft&&typeof t.confirmed!=='boolean'))fail()})});if(draft&&p.status!=='active')fail();};
  d.workoutLogs.forEach(l=>checkLog(l));if(d.draft){checkLog(d.draft,true);d.draft.exercises.forEach(e=>{if(!(e.previousDate===null||(str(e.previousDate)&&/^\d{4}-\d{2}-\d{2}$/.test(e.previousDate)))||!(e.previousWeek===null||integer(e.previousWeek,1,52)))fail();e.sets.forEach(s=>{if(!(s.previousWeight===null||num(s.previousWeight,0,2000))||!(s.previousReps===null||integer(s.previousReps,0,1000)))fail()})});}return d;
 }
