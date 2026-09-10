@@ -10,8 +10,8 @@ A personal workout tracker for your iPhone. Plain HTML, CSS and JavaScript; no i
 
 ## Publish to GitHub Pages
 
-1. Sign into GitHub and create a repository named `GymApp`.
-2. Upload the contents of this folder into the repository root. All app files in this publishing folder belong at the repository root. Include the hidden `.nojekyll` file if your upload method supports it.
+1. Sign into GitHub and create a repository named `setbook`.
+2. Upload the contents of this folder into the repository root. Keep `js` and `icons` as folders. Include the hidden `.nojekyll` file if your upload method supports it.
 3. Open the repository's **Settings → Pages**. Select **Deploy from a branch**, then **main** and **/(root)**. Save.
 4. Wait for GitHub to display the published site link, then open that link in Safari on your iPhone.
 5. Tap **Share → Add to Home Screen**. Open Setbook and check **Settings → Ready offline** while connected. Try reopening in airplane mode before your first gym visit.
@@ -35,3 +35,6 @@ All app assets are local; there are no third-party fonts, analytics or online de
 ## Verification
 
 The included implementation was checked with automated tests for first-session defaults, copied records, unconfirmed-set exclusion, original dates, completed weeks, completed blocks and backup validation. Physical iPhone installation and airplane-mode behavior must be checked on your phone after publishing.
+
+
+Version 3: searchable muscle-first exercise picker; saved program drafts and duplication; session reordering and temporary replacements with historical weights; binary activity; current-program and lifetime volume views; completed-session summaries. Planned rep ranges migrate once to 6–15. Weight volume uses reps × entered kg, doubled for dumbbell pairs, with an editable override in Settings. Previous backups remain importable.
