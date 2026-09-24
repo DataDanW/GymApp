@@ -11,7 +11,7 @@ export function decideSync(local,remote,meta,userId){
  return canonical(local)===meta.baseline?'clean':'push';
 }
 export class Cloud {
- constructor({storage=localStorage,fetcher=fetch,locks=navigator.locks,getData,onStatus=()=>{},onRestore=()=>{}}){Object.assign(this,{storage,fetcher,locks,getData,onStatus,onRestore});this.status='Sign in to enable cloud saving';this.remote=null;this.pending=false;this.timer=null;this.busy=false;this.choice=false;}
+ constructor({storage=localStorage,fetcher=globalThis.fetch.bind(globalThis),locks=navigator.locks,getData,onStatus=()=>{},onRestore=()=>{}}){Object.assign(this,{storage,fetcher,locks,getData,onStatus,onRestore});this.status='Sign in to enable cloud saving';this.remote=null;this.pending=false;this.timer=null;this.busy=false;this.choice=false;}
  read(key){const raw=this.storage.getItem(key);return raw?JSON.parse(raw):null;}
  get session(){return this.read(AUTH_KEY);}
  get meta(){return this.read(META_KEY);}
