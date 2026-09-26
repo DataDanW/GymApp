@@ -43,3 +43,14 @@
 @media(orientation:landscape) and (max-height:550px){body:has(.program-preview-scroll) main{max-width:1200px;padding-top:20px}.preview-help{margin:8px 0}}
 
 @media(orientation:landscape) and (max-height:550px){body:has(#program-preview-grid) .masthead{display:none}.preview-heading{display:flex;justify-content:space-between;align-items:center;gap:16px}.preview-heading h1{font-size:26px;margin-bottom:5px}.preview-program-name{font-size:13px;margin-bottom:0}.preview-controls{flex-shrink:0}.preview-help{font-size:12px}body:has(#program-preview-grid) .back{margin-bottom:10px}}
+
+
+/* Today prioritises resuming the current workout. */
+.today-heading{margin-bottom:20px}.today-heading h1{margin-bottom:6px}.today-heading p{margin:0}
+.resume-card{background:var(--green);color:#fff;border:1px solid var(--green);border-radius:18px;padding:22px;margin-bottom:14px}
+.resume-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:#d7f79a;margin-bottom:12px}.resume-status .status-dot{background:#d7f79a}
+.resume-card h2{font-size:26px;margin:0 0 8px;overflow-wrap:anywhere}.resume-card p{font-size:13px;color:#d6e3da;margin:0 0 18px}
+.resume-card .resume-button{width:100%;background:#d7f79a;color:#173d31;min-height:48px;font-size:16px}
+.active-block-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#edf1eb;margin-bottom:18px}
+.active-block-summary>div{min-width:0}.active-block-label{display:block;color:#506356;font-size:11px;margin-bottom:4px}
+.active-block-summary h2{font-size:16px;line-height:1.3;margin:0 0 4px;overflow-wrap:anywhere}.active-block-summary p{margin:0;font-size:12px}.active-block-summary .text-button{flex-shrink:0;white-space:nowrap;font-size:13px;padding:8px}

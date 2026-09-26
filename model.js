@@ -19,6 +19,14 @@ export function migrate(input){
 export const active=d=>d.programs.find(p=>p.status==='active');
 export function week(d,p){for(let w=1;w<=p.weeks;w++){if(!p.sessionTemplates.every(s=>d.workoutLogs.some(l=>l.programId===p.id&&l.sessionTemplateId===s.id&&l.weekNumber===w)))return w;}return p.weeks+1;}
 export function previous(d,pid,sid,eid){return [...d.workoutLogs].reverse().find(l=>l.programId===pid&&l.sessionTemplateId===sid&&l.exercises.some(e=>e.exerciseId===eid&&e.sets.length));}
+export function prefillNotes(d,eid){
+ // A blank note on the latest performed occurrence is an intentional value.
+ const log=[...d.workoutLogs].sort((a,b)=>b.date.localeCompare(a.date)||(b.completedAt||'').localeCompare(a.completedAt||'')).find(l=>l.exercises.some(e=>e.exerciseId===eid&&e.sets.some(s=>s.reps>0&&s.weight!=='')));
+ if(log)return log.exercises.find(e=>e.exerciseId===eid).notes??'';
+ // Existing program notes remain useful before an exercise is performed.
+ for(const p of [...d.programs].reverse())for(const session of p.sessionTemplates){const e=session.exercises.find(e=>e.exerciseId===eid&&e.notes?.trim());if(e)return e.notes;}
+ return '';
+}
 export function makeDraft(d,p,s){return {id:uid(),programId:p.id,sessionTemplateId:s.id,weekNumber:week(d,p),date:dateOnly(),startedAt:new Date().toISOString(),exercises:s.exercises.map(e=>{const log=previous(d,p.id,s.id,e.exerciseId),last=log?.exercises.find(x=>x.exerciseId===e.exerciseId);return {exerciseId:e.exerciseId,notes:last?.notes??e.notes,previousDate:log?.date??null,previousWeek:log?.weekNumber??null,sets:Array.from({length:last?.sets.length||e.defaultSets},(_,i)=>({setNumber:i+1,weight:last?.sets[i]?.weight??e.startingWeight,reps:last?.sets[i]?.reps??'',confirmed:false,previousWeight:last?.sets[i]?.weight??null,previousReps:last?.sets[i]?.reps??null}))};})};}
 export function finish(d){if(!d.draft)return false;const log=structuredClone(d.draft);log.exercises=log.exercises.map(e=>({...e,sets:e.sets.filter(s=>s.confirmed&&Number(s.reps)>0&&s.weight!=='').map((s,i)=>({setNumber:i+1,weight:Number(s.weight),reps:Number(s.reps)}))}));if(!log.exercises.some(e=>e.sets.length))return false;log.completedAt=new Date().toISOString();d.workoutLogs.push(log);d.draft=null;const p=active(d);if(p&&week(d,p)>p.weeks)p.status='completed';return true;}
 export function validate(d){

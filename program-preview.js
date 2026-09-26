@@ -1,6 +1,6 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Labels always accompany colour; all swatches use the same dark foreground.
-export const muscleColours={Chest:'#f0dfe1',Back:'#dce8f2',Shoulders:'#e6dff1',Traps:'#e4e6ef',Biceps:'#f1e3d4',Triceps:'#eee9cf',Forearms:'#e5e7d2',Quads:'#dcebdc',Hamstrings:'#d7eae5',Glutes:'#e8dce6',Calves:'#dce9ed',Abs:'#ebe2d8',Uncategorised:'#e8e8e8'};
+export const muscleColours={Chest:'#f1b7ba',Back:'#adcce8',Shoulders:'#d0b9e6',Traps:'#b9c3d4',Biceps:'#f2c398',Triceps:'#edda8e',Forearms:'#d0d99b',Quads:'#b5d7ad',Hamstrings:'#9ed5c9',Glutes:'#e4b3d4',Calves:'#a5dce5',Abs:'#d8bc9f',Uncategorised:'#dddddd'};
 export function previewTable(data,program,mode='groups'){
  const sessions=program.sessionTemplates,rows=Math.max(0,...sessions.map(s=>s.exercises.length)),library=new Map(data.exercises.map(e=>[e.id,e]));
  if(!rows)return '<p class="preview-empty">Add exercises to your sessions to see the layout here.</p>';
@@ -9,3 +9,4 @@ export function previewTable(data,program,mode='groups'){
 export function programPreview(data,program,mode='groups'){
  return `<a class="back" href="#program">← Back to program</a>${program?`<div class="preview-heading"><div><h1>Program preview</h1><p class="preview-program-name">${esc(program.name||'Untitled program')}</p></div><div class="preview-controls" role="group" aria-label="Preview content"><button type="button" data-action="preview-mode" data-mode="groups" aria-pressed="${mode==='groups'}">Muscle groups</button><button type="button" data-action="preview-mode" data-mode="exercises" aria-pressed="${mode==='exercises'}">Exercises</button></div></div><p class="hint preview-help">Read down each session in exercise order. Swipe across or turn your phone sideways for more space.</p><div id="program-preview-grid">${previewTable(data,program,mode)}</div>`:'<h1>Program preview</h1><p>This program is no longer available.</p>'}`;
 }
+
