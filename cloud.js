@@ -1,6 +1,10 @@
 import {validate,migrate} from './model.js';
 const URL='https://ndrqsinrcdrvrpkswrpn.supabase.co';
 const PUBLIC_KEY='sb_publishable_M-NVTMsMLZflGPyQtOO-bA_FAU8IBrG';
+export function signInRedirect(location=globalThis.location){
+ const vercel='https://gym-app-rose-xi.vercel.app/';
+ return location?.origin==='https://gym-app-rose-xi.vercel.app'?vercel:'https://datadanw.github.io/GymApp/';
+}
 export const AUTH_KEY='setbook-cloud-auth-v1',META_KEY='setbook-cloud-meta-v1';
 export const canonical=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 export function decideSync(local,remote,meta,userId){
@@ -22,7 +26,7 @@ export class Cloud {
   if(!response.ok)throw new Error(response.status===401?'Please sign in again.':value?.msg||value?.message||value?.error_description||'Cloud connection failed. Local data is safe.');return value;
  }
  async lock(fn){if(!this.locks)throw new Error('Cloud saving needs a current Safari, Chrome or Edge browser. Local saving still works.');return this.locks.request('setbook-cloud',fn);}
- async sendLink(email){await this.request('/auth/v1/otp?redirect_to='+encodeURIComponent('https://datadanw.github.io/GymApp/'),{body:{email,create_user:true}});this.say('Check your email and open the sign-in link on this device.');}
+ async sendLink(email){await this.request('/auth/v1/otp?redirect_to='+encodeURIComponent(signInRedirect()),{body:{email,create_user:true}});this.say('Check your email and open the sign-in link on this device.');}
  async useEmailLink(value){const link=new globalThis.URL(value.trim());if(link.origin!==URL||link.pathname!=='/auth/v1/verify'||!['signup','magiclink','email'].includes(link.searchParams.get('type'))||!link.searchParams.get('token'))throw new Error('Copy the sign-in button’s link from your Setbook email.');const s=await this.request('/auth/v1/verify',{body:{token_hash:link.searchParams.get('token'),type:link.searchParams.get('type')}});if(!s.access_token||!s.user)throw new Error('This link could not sign you in. Request a new email.');this.storage.setItem(AUTH_KEY,JSON.stringify({...s,expires_at:Date.now()+s.expires_in*1000}));}
  async acceptLink(hash){const p=new URLSearchParams(hash.replace(/^#/,''));if(!p.has('access_token'))return false;
   const token=p.get('access_token'),user=await this.request('/auth/v1/user',{token});
